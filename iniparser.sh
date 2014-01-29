@@ -59,3 +59,9 @@ gaia_locales_1_1=$install/gaia_1_1.txt
 gaia_locales_1_2=$install/gaia_1_2.txt
 gaia_locales_1_3=$install/gaia_1_3.txt
 l20n_test_locales=$install/l20n_test.txt
+
+# List of locales per branch for OmegaT (by Keko)
+trunk_locales_omegat=$install/central_omt.txt
+aurora_locales_omegat=$install/aurora_omt.txt
+beta_locales_omegat=$install/beta_omt.txt
+release_locales_omegat=$install/release_omt.txt
