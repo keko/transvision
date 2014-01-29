@@ -18,6 +18,7 @@ trap interrupt_code SIGINT
 NORMAL=$(tput sgr0)
 GREEN=$(tput setaf 2; tput bold)
 RED=$(tput setaf 1)
+BLUE=$(tput setaf 4; tput bold)
 
 function echored() {
     echo -e "$RED$*$NORMAL"
@@ -25,6 +26,10 @@ function echored() {
 
 function echogreen() {
     echo -e "$GREEN$*$NORMAL"
+}
+
+function echoblue() {
+    echo -e "$BLUE$*$NORMAL"
 }
 
 all_locales=true
@@ -68,6 +73,7 @@ function updateStandardRepo() {
     local repo_source="${2}_source"     # e.g. release_source, beta_source, aurora_source, trunk_source
     local repo_l10n="${2}_l10n"         # e.g. release_l10n, etc.
     local locale_list="${2}_locales"    # e.g. release_locales, etc.
+    local locale_list_omt="${2}_locales_omegat"    # e.g. release_locales_omegat, beta_locales_omegat
 
     if $checkrepo
     then
@@ -114,8 +120,16 @@ function updateStandardRepo() {
         then
             for locale in $(cat ${!locale_list})
             do
+                omt=0
                 echogreen "Create ${repo_name^^} TMX for $locale"
-                nice -20 python tmxmaker.py ${!repo_l10n}/$locale/ ${!repo_source}/COMMUN/ $locale en-US $repo_name
+                grep -q ^$locale$ ${!locale_list_omt}
+                rc=$?
+                if [ $rc -eq 0 ]
+                then
+                    echoblue "Create customized ${repo_name^^} TMX for $locale to use in OmegaT"
+                    omt=1
+                fi
+                nice -20 python tmxmaker.py -o $omt ${!repo_l10n}/$locale/ ${!repo_source}/COMMUN/ $locale en-US $repo_name
             done
         else
             if [ -d ${!repo_l10n}/$locale_code ]

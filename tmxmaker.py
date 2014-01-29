@@ -61,6 +61,16 @@ def tmx_header(target_file, sourcelang):
      '''
     target_file.write(header.format(creationdate=str(datetime.now()), sourcelang=sourcelang))
 
+def tmx_header_omt(target_file, sourcelang):
+    from datetime import datetime
+    header = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tmx SYSTEM "tmx11.dtd">
+<tmx version="1.1">
+  <header creationtool="tmxmakerOmT" o-tmf="OmegaT TMX" o-encoding="UTF8" adminlang="EN-US" datatype="plaintext" creationtoolversion="0.1" segtype="paragraph" creationdate="{creationdate}" srclang="{sourcelang}">
+  </header>
+  <body>
+'''
+    target_file.write(header.format(creationdate=str(datetime.now()), sourcelang=sourcelang))
 
 def tmx_add_tu(ent, ch1, ch2, target_file, targetlang, sourcelang):
     ch1 = ch1.replace('&', '&amp;')
@@ -83,6 +93,34 @@ def tmx_add_tu(ent, ch1, ch2, target_file, targetlang, sourcelang):
     target_file.write("    </tu>")
     target_file.write("\n")
 
+def tmx_add_tu_omt(ent, ch1, ch2, target_file, targetlang, sourcelang):
+    ch1 = ch1.replace('&', '&amp;')
+    ch2 = ch2.replace('&', '&amp;')
+    ch1 = ch1.replace('<', '&lt;')
+    ch1 = ch1.replace('>', '&gt;')
+    ch2 = ch2.replace('<', '&lt;')
+    ch2 = ch2.replace('>', '&gt;')
+    target_file.write('    <tu>')
+    target_file.write("\n")
+    target_file.write('        <prop type="file">' + ent.split(":")[0] + '</prop>')
+    target_file.write("\n")
+    target_file.write('        <prop type="id">' + ent.split(":")[1] + '</prop>')
+    target_file.write("\n")
+    target_file.write('        <tuv lang="' + sourcelang + '">')
+    target_file.write("\n")
+    target_file.write('            <seg>' + ch1.encode('utf-8') + '</seg>')
+    target_file.write("\n")
+    target_file.write('        </tuv>')
+    target_file.write("\n")
+    target_file.write('        <tuv lang="' + targetlang + '">')
+    target_file.write("\n")
+    target_file.write('            <seg>' + ch2.encode('utf-8') + '</seg>')
+    target_file.write("\n")
+    target_file.write('        </tuv>')
+    target_file.write("\n")
+    target_file.write('    </tu>')
+    target_file.write("\n")
+
 def tmx_close(target_file):
     target_file.write("</body>\n</tmx>")
 
@@ -101,6 +139,11 @@ def php_close_array(target_file):
 if __name__ == "__main__":
     usage = "test"
     parser = OptionParser(usage, version='%prog 0.1')
+    parser.add_option("-o", "--omegat",
+                      action="store",
+                      type="int",
+                      dest="omegat",
+                      default="0")
     (options, args) = parser.parse_args(sys.argv[1:])
 
     locale_repo = args[0]
@@ -125,6 +168,7 @@ if __name__ == "__main__":
     filename1 = localpath + "/memoire_" + langcode2 + "_" + langcode1 + ".tmx"
     filename2 = localpath + "/cache_" + langcode2 + ".php"
     filename3 = localpath + "/cache_" + langcode1 + ".php"
+    filename4 = localpath + "/tm_" + langcode2 + "_" + langcode1 + "_forOmegaT.tmx"
 
     target_file1 = open(filename1, "w")
     target_file2 = open(filename2, "w")
@@ -132,6 +176,10 @@ if __name__ == "__main__":
     tmx_header(target_file1, langcode2)
     php_header(target_file2)
     php_header(target_file3)
+
+    if options.omegat:
+        target_file4 = open(filename4, "w")
+        tmx_header_omt(target_file4, langcode2)
 
     for directory in dirs:
 
@@ -160,9 +208,14 @@ if __name__ == "__main__":
             tmx_add_tu(entity, chaine[entity], chaine2.get(entity,""), target_file1, langcode1, langcode2)
             php_add_to_array(entity, chaine[entity], target_file2)
             php_add_to_array(entity, chaine2.get(entity,""), target_file3)
+            if (chaine2.get(entity,"") != "" && options.omegat):
+                tmx_add_tu_omt(entity, chaine[entity], chaine2.get(entity,""), target_file4, langcode1, langcode2)
     tmx_close(target_file1)
     php_close_array(target_file2)
     php_close_array(target_file3)
     target_file1.close()
     target_file2.close()
     target_file3.close()
+    if options.omegat:
+        tmx_close(target_file4)
+        target_file4.close()
